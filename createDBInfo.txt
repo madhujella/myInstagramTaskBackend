@@ -1,0 +1,1 @@
+createdbjs myinsta --user=postgresUsername --password=yourPassword
