@@ -7,13 +7,12 @@ const bcrypt = require('bcryptjs')
 const mainpage = async (req, res, next) => {
     const userid = req.userid
     try {
-        // const result = await db.query('SELECT * FROM photos WHERE userid=$1', [userid])
-        const result = await db.query(`SELECT photos.userid, favorites.likerid, photos.createdon,
-                            photos.photoid, photos.caption, photos.url, , favorites.likerid FROM favorites
-                            LEFT JOIN photos ON photos.userid = favorites.likerid
-                            LEFT JOIN users  ON users.userid = favorites.likerid
-                            WHERE photos.userid=$1`, [userid])
-        res.status(200).json({ data: result.rows })
+        const userPhotos = await db.query('SELECT * FROM photos WHERE userid=$1', [userid])
+        const userFavd = await db.query(`select photos.photoid, photos.userid, photos.url, photos.caption,
+                                        favorites.likerid from photos
+                                        left join favorites on favorites.photoid = photos.photoid
+                                        where favorites.likerid=$1 AND photos.userid != $1`, [userid])
+        res.status(200).json({ users: userPhotos.rows, favs: userFavd.rows })
     } catch (e) {
         console.log(e)
         res.status(500).json({ message: 'No Photos Found, server error' })

@@ -62,7 +62,8 @@ const pool = new Pool(config);
                                 (1, 100),
                                 (7, 101), 
                                 (7, 102),
-                                (1, 102) ON CONFLICT DO NOTHING`
+                                (1, 102),
+                                (1, 101) ON CONFLICT DO NOTHING`
 
         await client.query(insertUsers, [hashPw, hashPw, hashPw])
         await client.query(insertPhotos)
