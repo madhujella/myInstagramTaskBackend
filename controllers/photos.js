@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken')
-const { validation } = require('../utility')
 const db = require('../db')
 const { error } = require('../utility')
 const bcrypt = require('bcryptjs')
+const { validationResult } = require('express-validator')
+
 
 const mainpage = async (req, res, next) => {
     const userid = req.userid
@@ -43,12 +44,14 @@ const userProfile = async (req, res, next) => {
 const photo = async (req, res, next) => {
     const photoid = req.params.photoid
     try {
-        const result = await db.query(`SELECT favorites.likerid, favorites.photoid, 
-                                        photos.photoid, photos.userid, photos.caption, 
-                                        photos.url, photos.createdon
-                                        FROM favorites INNER JOIN photos 
-                                        ON photos.photoid=favorites.photoid WHERE favorites.photoid=$1`, [photoid])
-        res.status(200).json({ data: result.rows[0], favsCount: result.rowCount })
+        const photo = await db.query('SELECT * FROM photos WHERE photoid=$1', [photoid])
+        // const result = await db.query(`SELECT favorites.likerid, favorites.photoid, 
+        //                                 photos.photoid, photos.userid, photos.caption, 
+        //                                 photos.url, photos.createdon
+        //                                 FROM favorites INNER JOIN photos 
+        //                                 ON photos.photoid=favorites.photoid WHERE favorites.photoid=$1`, [photoid])
+        const favsCount = await db.query('SELECT * FROM favorites WHERE photoid=$1', [photoid])
+        res.status(200).json({ data: photo.rows[0], favsCount: favsCount.rowCount })
     } catch (e) {
         console.log(e)
         res.status(404).json({ message: 'Cannot find photo, server error' })
@@ -58,7 +61,11 @@ const photo = async (req, res, next) => {
 }
 
 const editProfile = async (req, res, next) => {
-    validation(req, res, next)
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+
     const { email } = req.body;
     const { password } = req.body;
     const { userid } = req.body;
@@ -82,7 +89,10 @@ const editProfile = async (req, res, next) => {
 }
 
 const fav = async (req, res, next) => {
-    validation(req, res, next)
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
     const { userid } = req;
     const { photoid } = req.body;
     const { shouldfav } = req.body;

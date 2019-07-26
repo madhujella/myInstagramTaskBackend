@@ -1,12 +1,18 @@
 const db = require('../db')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { error, validation } = require('../utility')
+const { error } = require('../utility')
+const { validationResult } = require('express-validator')
+
 
 require('dotenv').config()
 
 const register = async (req, res, next) => {
-    validation(req, res, next)
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+
     const { email } = req.body
     const { username } = req.body
     const { password } = req.body
@@ -24,7 +30,11 @@ const register = async (req, res, next) => {
 }
 
 const login = async (req, res, next) => {
-    validation(req, res, next)
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+
     const { username } = req.body
     const { password } = req.body
 
