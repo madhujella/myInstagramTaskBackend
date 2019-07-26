@@ -1,7 +1,8 @@
 const express = require('express')
 const handlers = require('../controllers')
 const isAuth = require('../middlewares/is-auth')
-const { check } = require('express-validator')
+const { body } = require('express-validator')
+const db = require('../db')
 
 const router = express.Router();
 
@@ -10,27 +11,41 @@ router.get('/mainpage', isAuth, handlers.photos.mainpage)
 router.get('/:userId', handlers.photos.userProfile)
 router.get('/:photoId', handlers.photos.photo)
 
-router.post('/editprofile', isAuth,[
-    check('userId').not().isEmpty(),
-    check('username').isLength({min: 5}),
-    check('password').isLength({min: 5}),
-    check('token').isJWT()
+router.post('/editprofile', isAuth, [
+    body('userId').trim().not().isEmpty(),
+    body('email').trim().isEmail().normalizeEmail(),
+    body('password').trim().isLength({ min: 5 }),
+    body('token').trim().isJWT()
 ], handlers.photos.editProfile)
 
-router.post('/fav', isAuth,[
-    check('token').isJWT(),
-    check('userId').not().isEmpty()
+router.post('/fav', isAuth, [
+    body('token').trim().isJWT(),
+    body('userId').trim().not().isEmpty()
 ], handlers.photos.fav)
 
 router.post('/login', [
-    check('username').isLength({min: 5}),
-    check('password').isLength({min: 5})
+    body('username').trim().isLength({ min: 2 }),
+    body('password').trim().isLength({ min: 2 })
 ], handlers.auth.login)
 
 router.post('/register', [
-    check('email').isEmail().normalizeEmail(),
-    check('username').isLength({min: 5}),
-    check('password').isLength({min: 5})
+    body('email').isEmail().normalizeEmail()
+        .custom((value, { req }) => {
+            return db.query('SELECT * FROM users WHERE email=$1', [value]).then(result => {
+                if (result.rowCount) {
+                    return Promise.reject('E-Mail address already exists!');
+                }
+            });
+        }),
+    body('username').isLength({ min: 2 })
+        .custom((value, { req }) => {
+            return db.query('SELECT * FROM users WHERE username=$1', [value]).then(result => {
+                if (result.rowCount) {
+                    return Promise.reject('Username already exists');
+                }
+            })
+        }),
+    body('password').isLength({ min: 2 })
 ], handlers.auth.register)
 
 router.post('/logout', isAuth, handlers.auth.logout)

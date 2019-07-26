@@ -5,6 +5,7 @@ const path = require('path')
 
 const app = express()
 
+app.use(bodyparser.urlencoded())
 app.use(bodyparser.json())
 
 app.use((req, res, next) => {
