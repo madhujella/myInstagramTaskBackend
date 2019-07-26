@@ -19,23 +19,23 @@ const pool = new Pool(config);
         await client.query('BEGIN')
 
         const userTable = `CREATE TABLE IF NOT EXISTS users ( 
-            userId SERIAL PRIMARY KEY,
+            userid SERIAL PRIMARY KEY,
             email VARCHAR(100) NOT NULL,
             username VARCHAR(30) NOT NULL,
             password VARCHAR(255) NOT NULL,
             profile_avatar VARCHAR(100) NOT NULL,
-            createdOn TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            createdon TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`
         const photoTable = `CREATE TABLE IF NOT EXISTS photos (
-            photoId SERIAL PRIMARY KEY,
+            photoid SERIAL PRIMARY KEY,
             caption VARCHAR(255),
-            userId INTEGER REFERENCES users(userId),
+            userid INTEGER REFERENCES users(userid),
             url VARCHAR(255),
-            createdOn TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            createdon TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`
         const favoriteTable = `CREATE TABLE IF NOT EXISTS favorites (
-            photoId INTEGER NOT NULL REFERENCES photos(photoId) PRIMARY KEY,
-            likerId INTEGER NOT NULL REFERENCES users(userId)
+            photoid INTEGER NOT NULL REFERENCES photos(photoid),
+            likerid INTEGER NOT NULL REFERENCES users(userid) 
         )`
         await client.query(userTable)
         await client.query(photoTable)
@@ -43,13 +43,13 @@ const pool = new Pool(config);
 
         const hashPw = await bcrypt.hash('password', 12)
 
-        const insertUsers = `INSERT INTO users(userId, email, username, password, profile_avatar) VALUES
+        const insertUsers = `INSERT INTO users(userid, email, username, password, profile_avatar) VALUES
                                 (100, 'test1@test.com', 'test1', $1, 'default.jpg'),
                                 (101, 'test2@test.com', 'test2', $2, 'default.jpg'),
                                 (102, 'test3@test.com', 'test3', $3, 'default.jpg') 
                                 ON CONFLICT DO NOTHING`
 
-        const insertPhotos = `INSERT INTO photos(userId, photoId, caption, url) VALUES
+        const insertPhotos = `INSERT INTO photos(userid, photoid, caption, url) VALUES
                                 (101, 1, 'pic1', 'default.jpg'),
                                 (101, 2, 'pic2', 'default.jpg'),
                                 (100, 3, 'pic3', 'default.jpg'),
@@ -58,8 +58,11 @@ const pool = new Pool(config);
                                 (102, 6, 'pic6', 'default.jpg'),
                                 (100, 7, 'pic7', 'default.jpg') ON CONFLICT DO NOTHING`
 
-        const insertFav = `INSERT INTO favorites(photoId, likerId) VALUES
-                                (1, 100), (7, 101), (7, 102) ON CONFLICT DO NOTHING`
+        const insertFav = `INSERT INTO favorites(photoid, likerid) VALUES
+                                (1, 100),
+                                (7, 101), 
+                                (7, 102),
+                                (1, 102) ON CONFLICT DO NOTHING`
 
         await client.query(insertUsers, [hashPw, hashPw, hashPw])
         await client.query(insertPhotos)

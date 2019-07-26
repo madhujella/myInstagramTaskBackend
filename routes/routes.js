@@ -8,11 +8,11 @@ const router = express.Router();
 
 router.get('/mainpage', isAuth, handlers.photos.mainpage)
 
-router.get('/:userId', handlers.photos.userProfile)
-router.get('/:photoId', handlers.photos.photo)
+router.get('/user/:userid', handlers.photos.userProfile)
+router.get('/photo/:photoid', handlers.photos.photo)
 
 router.post('/editprofile', isAuth, [
-    body('userId').trim().not().isEmpty(),
+    body('userid').trim().not().isEmpty(),
     body('email').trim().isEmail().normalizeEmail(),
     body('password').trim().isLength({ min: 5 }),
     body('token').trim().isJWT()
@@ -20,7 +20,9 @@ router.post('/editprofile', isAuth, [
 
 router.post('/fav', isAuth, [
     body('token').trim().isJWT(),
-    body('userId').trim().not().isEmpty()
+    body('userid').trim().not().isEmpty(),
+    body('shouldfav').trim().isBoolean(),
+    body('photoid').trim().not().isEmpty()
 ], handlers.photos.fav)
 
 router.post('/login', [

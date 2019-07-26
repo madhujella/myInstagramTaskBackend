@@ -13,6 +13,7 @@ module.exports = (req, res, next) => {
   try {
     decodedToken = jwt.verify(token, process.env.secret);
   } catch (err) {
+    res.status(500).json({message: 'invalid token'})
     err.statusCode = 500;
     throw err;
   }
@@ -20,6 +21,6 @@ module.exports = (req, res, next) => {
     res.status(401).json({message: 'Not Authenticated'})
     error('Not authenticated.', 401)
   }
-  req.userId = decodedToken.userId;
+  req.userid = decodedToken.userid;
   next();
 };

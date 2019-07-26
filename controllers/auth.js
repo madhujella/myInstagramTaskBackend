@@ -37,11 +37,11 @@ const login = async (req, res, next) => {
         }
 
         const token = jwt.sign({
-            userId: result.rows[0].userId, 
+            userid: result.rows[0].userid, 
             username: result.rows[0].username, 
             email: result.rows[0].email
         }, process.env.secret)
-        res.status(200).json({ userId: result.rows[0].userid, email: result.rows[0].email, token})
+        res.status(200).json({ userid: result.rows[0].userid, email: result.rows[0].email, token})
     } catch (e) {
         console.log(e)
         res.status(404).json({ message: 'No user found' })
@@ -51,7 +51,7 @@ const login = async (req, res, next) => {
 }
 
 const logout = async (req, res, next) => {
-
+    next()
 }
 
 module.exports = { register, login, logout }
