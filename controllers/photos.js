@@ -25,10 +25,10 @@ const mainpage = async (req, res, next) => {
 const userProfile = async (req, res, next) => {
     const userid = req.params.userid
     try {
-        const isUser = await db.query('SELECT * FROM users WHERE userid=$1', [userid])
+        const isUser = await db.query('SELECT userid, username, profile_avatar, createdon FROM users WHERE userid=$1', [userid])
         if (isUser.rowCount) {
             const result = await db.query('SELECT * FROM photos WHERE userid=$1', [userid])
-            res.status(200).json({ data: result.rows })
+            res.status(200).json({ user: isUser.rows, data: result.rows })
         } else {
             res.status(404).json({ message: 'User not found' })
             error('No user found', 404)
@@ -43,15 +43,27 @@ const userProfile = async (req, res, next) => {
 
 const photo = async (req, res, next) => {
     const photoid = req.params.photoid
+    const userid = (req.userid) ? req.userid : null;
+    console.log(userid)
     try {
-        const photo = await db.query('SELECT * FROM photos WHERE photoid=$1', [photoid])
-        // const result = await db.query(`SELECT favorites.likerid, favorites.photoid, 
-        //                                 photos.photoid, photos.userid, photos.caption, 
-        //                                 photos.url, photos.createdon
-        //                                 FROM favorites INNER JOIN photos 
-        //                                 ON photos.photoid=favorites.photoid WHERE favorites.photoid=$1`, [photoid])
-        const favsCount = await db.query('SELECT * FROM favorites WHERE photoid=$1', [photoid])
-        res.status(200).json({ data: photo.rows[0], favsCount: favsCount.rowCount })
+        const photo = await db.query(`SELECT photos.userid, photos.photoid, photos.caption, photos.url, photos.createdon,
+                                        users.username, users.profile_avatar
+                                        FROM photos 
+                                        INNER JOIN users ON users.userid = photos.userid
+                                        WHERE photos.photoid = $1
+                                        `, [photoid])
+        if (photo.rowCount) {
+            const favsCount = await db.query('SELECT * FROM favorites WHERE photoid=$1', [photoid])
+            if(userid){
+                const isFav = await db.query('SELECT * FROM favorites WHERE photoid=$1 AND likerid=$2', [photoid, userid])
+                const isLoggedUserFavd = isFav.rowCount > 0 ? true: false;
+                res.status(200).json({ data: photo.rows[0], favsCount: favsCount.rowCount, isFaved: isLoggedUserFavd })
+            }else {
+                res.status(200).json({ data: photo.rows[0], favsCount: favsCount.rowCount})
+            }
+        }else {
+            res.status(404).json({ message: 'Post not found' })
+        }
     } catch (e) {
         console.log(e)
         res.status(404).json({ message: 'Cannot find photo, server error' })
@@ -66,7 +78,6 @@ const editProfile = async (req, res, next) => {
         return res.status(422).json({ errors: errors.array() });
     }
 
-    const { email } = req.body;
     const { password } = req.body;
     const { userid } = req.body;
     const verifyUserid = req.userid;
@@ -79,7 +90,7 @@ const editProfile = async (req, res, next) => {
 
     const hashPw = await bcrypt.hash(password, 12)
     try {
-        const result = await db.query('UPDATE users SET email=$1, password=$2 WHERE userid=$3', [email, hashPw, verifyUserid])
+        const result = await db.query('UPDATE users SET password=$1 WHERE userid=$1', [hashPw, verifyUserid])
         res.status(201).json({ message: 'updated success' })
     } catch (e) {
         console.log(e)

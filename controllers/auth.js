@@ -51,7 +51,15 @@ const login = async (req, res, next) => {
             username: result.rows[0].username, 
             email: result.rows[0].email
         }, process.env.secret)
-        res.status(200).json({ userid: result.rows[0].userid, email: result.rows[0].email, token})
+        
+        res.status(200).json({ 
+            userid: result.rows[0].userid, 
+            profile_avatar: result.rows[0].profile_avatar, 
+            username: result.rows[0].username, 
+            email: result.rows[0].email, 
+            createdon: result.rows[0].createdon,
+            token
+        })
     } catch (e) {
         console.log(e)
         res.status(404).json({ message: 'No user found' })

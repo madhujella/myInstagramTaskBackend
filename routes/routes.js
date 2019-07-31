@@ -10,11 +10,11 @@ router.get('/mainpage', isAuth, handlers.photos.mainpage)
 
 router.get('/user/:userid', handlers.photos.userProfile)
 router.get('/photo/:photoid', handlers.photos.photo)
+router.get('/photo/:photoid/:userid', isAuth, handlers.photos.photo)
 
 router.post('/editprofile', isAuth, [
     body('userid').trim().not().isEmpty(),
-    body('email').trim().isEmail().normalizeEmail(),
-    body('password').trim().isLength({ min: 5 }),
+    body('password').trim().isLength({ min: 3 }),
     body('token').trim().isJWT()
 ], handlers.photos.editProfile)
 
@@ -26,8 +26,8 @@ router.post('/fav', isAuth, [
 ], handlers.photos.fav)
 
 router.post('/login', [
-    body('username').trim().isLength({ min: 2 }),
-    body('password').trim().isLength({ min: 2 })
+    body('username').trim().isLength({ min: 3 }),
+    body('password').trim().isLength({ min: 3 })
 ], handlers.auth.login)
 
 router.post('/register', [
@@ -39,7 +39,7 @@ router.post('/register', [
                 }
             });
         }),
-    body('username').isLength({ min: 2 })
+    body('username').isLength({ min: 3 })
         .custom((value, { req }) => {
             return db.query('SELECT * FROM users WHERE username=$1', [value]).then(result => {
                 if (result.rowCount) {
@@ -47,7 +47,7 @@ router.post('/register', [
                 }
             })
         }),
-    body('password').isLength({ min: 2 })
+    body('password').isLength({ min: 3 })
 ], handlers.auth.register)
 
 router.post('/logout', isAuth, handlers.auth.logout)
